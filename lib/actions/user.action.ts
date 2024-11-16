@@ -6,7 +6,6 @@ import { appwriteConfig } from "../appwrite/config";
 import { parseStringify } from "../utils";
 import { cookies } from "next/headers";
 import { avatarPlaceholderUrl } from "@/constants";
-import { parse } from "path";
 import { redirect } from "next/navigation";
 
 export const getUserByEmail = async (email: string) => {
