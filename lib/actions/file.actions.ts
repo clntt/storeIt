@@ -5,7 +5,6 @@ import { appwriteConfig } from "../appwrite/config";
 import { handleError } from "./user.action";
 import { ID } from "node-appwrite";
 import { InputFile } from "node-appwrite/file";
-import { UploadFileProps } from "@/types";
 import { constructFileUrl, getFileType, parseStringify } from "../utils";
 import { revalidatePath } from "next/cache";
 
@@ -14,6 +13,7 @@ export const uploadFile = async ({
   ownerId,
   accountId,
   path,
+  // eslint-disable-next-line no-undef
 }: UploadFileProps) => {
   const { storage, databases } = await createAdminClient();
   try {
