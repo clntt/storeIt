@@ -67,30 +67,30 @@ export const createAccount = async ({
   return parseStringify({ accountId });
 };
 
-export const verifySecret = async ({
-  accountId,
-  password,
-}: {
-  accountId: string;
-  password: string;
-}) => {
-  try {
-    const { account } = await createAdminClient();
+// export const verifySecret = async ({
+//   accountId,
+//   password,
+// }: {
+//   accountId: string;
+//   password: string;
+// }) => {
+//   try {
+//     const { account } = await createAdminClient();
 
-    const session = await account.createSession(accountId, password);
+//     const session = await account.createSession(accountId, password);
 
-    (await cookies()).set("appwrite-session", session.secret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: true,
-    });
+//     (await cookies()).set("appwrite-session", session.secret, {
+//       path: "/",
+//       httpOnly: true,
+//       sameSite: "strict",
+//       secure: true,
+//     });
 
-    return parseStringify({ sessionId: session.$id });
-  } catch (error) {
-    handleError(error, "Failed to verify OTP");
-  }
-};
+//     return parseStringify({ sessionId: session.$id });
+//   } catch (error) {
+//     handleError(error, "Failed to verify OTP");
+//   }
+// };
 
 export const getCurrentUser = async () => {
   try {
@@ -136,5 +136,35 @@ export const signInUser = async ({ email }: { email: string }) => {
     return parseStringify({ accountId: null, error: "User not found" });
   } catch (error) {
     handleError(error, "Failed to sign out user");
+  }
+};
+
+export const verifySecret = async ({
+  accountId,
+  password,
+}: {
+  accountId: string;
+  password: string;
+}) => {
+  try {
+    const { account } = await createAdminClient();
+
+    const session = await account.createSession(accountId, password);
+    console.log("Session created successfully:", session);
+
+    // Set session cookie
+    const cookieStore = cookies();
+    (await cookieStore).set("appwrite-session", session.secret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+    });
+    console.log("Session cookie set successfully.");
+
+    return parseStringify({ sessionId: session.$id });
+  } catch (error) {
+    console.error("Failed to verify secret:", error);
+    throw new Error("Failed to verify secret");
   }
 };
