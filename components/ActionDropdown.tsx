@@ -30,7 +30,6 @@ import {
   renameFile,
   updateFileUsers,
 } from "@/lib/actions/file.actions";
-import { set } from "react-hook-form";
 import { FileDetails, ShareInput } from "./ActionsModalContent";
 
 const ActionDropdown = ({ file }: { file: Models.Document }) => {
