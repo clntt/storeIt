@@ -1,5 +1,5 @@
 "use client";
-import React, { MouseEvent, useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "./ui/button";
 import { cn, convertFileToUrl, getFileType } from "@/lib/utils";
@@ -20,7 +20,7 @@ const FileUploader = ({ ownerId, accountId, className }: Props) => {
   const { toast } = useToast();
   const path = usePathname();
   const handleRemoveField = (
-    e: React.MouseEvent<HTMLImageElement, MouseEvent>,
+    e: React.MouseEvent<HTMLImageElement>,
     fileName: string
   ) => {
     e.stopPropagation();
