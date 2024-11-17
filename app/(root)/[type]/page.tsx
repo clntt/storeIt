@@ -18,7 +18,10 @@ const Page = async ({ searchParams, params }: SearchParamProps) => {
 
         <div className="total-size-section">
           <p className="body-1">
-            Total: <span className="h5">0 MB</span>
+            Total:{" "}
+            <span className="h5">
+              {files.total} {files.total > 1 ? "Files" : "File"}
+            </span>
           </p>
 
           <div className="sort-container">
