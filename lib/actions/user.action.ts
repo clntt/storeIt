@@ -1,14 +1,14 @@
 "use server";
 
-import { ID, Query } from "node-appwrite";
-import { createAdminClient, createSessionClient } from "../appwrite";
-import { appwriteConfig } from "../appwrite/config";
-import { parseStringify } from "../utils";
+import { createAdminClient, createSessionClient } from "@/lib/appwrite";
+import { appwriteConfig } from "@/lib/appwrite/config";
+import { Query, ID } from "node-appwrite";
+import { parseStringify } from "@/lib/utils";
 import { cookies } from "next/headers";
 import { avatarPlaceholderUrl } from "@/constants";
 import { redirect } from "next/navigation";
 
-export const getUserByEmail = async (email: string) => {
+const getUserByEmail = async (email: string) => {
   const { databases } = await createAdminClient();
 
   const result = await databases.listDocuments(
@@ -20,7 +20,7 @@ export const getUserByEmail = async (email: string) => {
   return result.total > 0 ? result.documents[0] : null;
 };
 
-export const handleError = async (error: unknown, message: string) => {
+const handleError = (error: unknown, message: string) => {
   console.log(error, message);
   throw error;
 };
@@ -30,9 +30,10 @@ export const sendEmailOTP = async ({ email }: { email: string }) => {
 
   try {
     const session = await account.createEmailToken(ID.unique(), email);
+
     return session.userId;
   } catch (error) {
-    handleError(error, "Error sending email OTP");
+    handleError(error, "Failed to send email OTP");
   }
 };
 
@@ -67,30 +68,30 @@ export const createAccount = async ({
   return parseStringify({ accountId });
 };
 
-// export const verifySecret = async ({
-//   accountId,
-//   password,
-// }: {
-//   accountId: string;
-//   password: string;
-// }) => {
-//   try {
-//     const { account } = await createAdminClient();
+export const verifySecret = async ({
+  accountId,
+  password,
+}: {
+  accountId: string;
+  password: string;
+}) => {
+  try {
+    const { account } = await createAdminClient();
 
-//     const session = await account.createSession(accountId, password);
+    const session = await account.createSession(accountId, password);
 
-//     (await cookies()).set("appwrite-session", session.secret, {
-//       path: "/",
-//       httpOnly: true,
-//       sameSite: "strict",
-//       secure: true,
-//     });
+    (await cookies()).set("appwrite-session", session.secret, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "strict",
+      secure: true,
+    });
 
-//     return parseStringify({ sessionId: session.$id });
-//   } catch (error) {
-//     handleError(error, "Failed to verify OTP");
-//   }
-// };
+    return parseStringify({ sessionId: session.$id });
+  } catch (error) {
+    handleError(error, "Failed to verify OTP");
+  }
+};
 
 export const getCurrentUser = async () => {
   try {
@@ -106,7 +107,7 @@ export const getCurrentUser = async () => {
 
     if (user.total <= 0) return null;
 
-    return parseStringify(user?.documents[0]);
+    return parseStringify(user.documents[0]);
   } catch (error) {
     console.log(error);
   }
@@ -114,6 +115,7 @@ export const getCurrentUser = async () => {
 
 export const signOutUser = async () => {
   const { account } = await createSessionClient();
+
   try {
     await account.deleteSession("current");
     (await cookies()).delete("appwrite-session");
@@ -128,6 +130,7 @@ export const signInUser = async ({ email }: { email: string }) => {
   try {
     const existingUser = await getUserByEmail(email);
 
+    // User exists, send OTP
     if (existingUser) {
       await sendEmailOTP({ email });
       return parseStringify({ accountId: existingUser.accountId });
@@ -135,36 +138,6 @@ export const signInUser = async ({ email }: { email: string }) => {
 
     return parseStringify({ accountId: null, error: "User not found" });
   } catch (error) {
-    handleError(error, "Failed to sign out user");
-  }
-};
-
-export const verifySecret = async ({
-  accountId,
-  password,
-}: {
-  accountId: string;
-  password: string;
-}) => {
-  try {
-    const { account } = await createAdminClient();
-
-    const session = await account.createSession(accountId, password);
-    console.log("Session created successfully:", session);
-
-    // Set session cookie
-    const cookieStore = cookies();
-    (await cookieStore).set("appwrite-session", session.secret, {
-      path: "/",
-      httpOnly: true,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-    });
-    console.log("Session cookie set successfully.");
-
-    return parseStringify({ sessionId: session.$id });
-  } catch (error) {
-    console.error("Failed to verify secret:", error);
-    throw new Error("Failed to verify secret");
+    handleError(error, "Failed to sign in user");
   }
 };

@@ -1,12 +1,11 @@
-import Link from "next/link";
 import { Models } from "node-appwrite";
-import React from "react";
-import Thumbnail from "./Thumbnail";
+import Link from "next/link";
+import Thumbnail from "@/components/Thumbnail";
 import { convertFileSize } from "@/lib/utils";
-import FormattedDateTime from "./FormattedDateTime";
-import ActionDropdown from "./ActionDropdown";
+import FormattedDateTime from "@/components/FormattedDateTime";
+import ActionDropdown from "@/components/ActionDropdown";
 
-const Card = ({ file }: Models.Document) => {
+const Card = ({ file }: { file: Models.Document }) => {
   return (
     <Link href={file.url} target="_blank" className="file-card">
       <div className="flex justify-between">
@@ -37,5 +36,4 @@ const Card = ({ file }: Models.Document) => {
     </Link>
   );
 };
-
 export default Card;

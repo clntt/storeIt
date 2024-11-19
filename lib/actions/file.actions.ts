@@ -1,12 +1,17 @@
 "use server";
 
-import { createAdminClient, createSessionClient } from "../appwrite";
-import { appwriteConfig } from "../appwrite/config";
-import { getCurrentUser, handleError } from "./user.action";
-import { ID, Models, Query } from "node-appwrite";
+import { createAdminClient, createSessionClient } from "@/lib/appwrite";
 import { InputFile } from "node-appwrite/file";
-import { constructFileUrl, getFileType, parseStringify } from "../utils";
+import { appwriteConfig } from "@/lib/appwrite/config";
+import { ID, Models, Query } from "node-appwrite";
+import { constructFileUrl, getFileType, parseStringify } from "@/lib/utils";
 import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "./user.action";
+
+const handleError = (error: unknown, message: string) => {
+  console.log(error, message);
+  throw error;
+};
 
 export const uploadFile = async ({
   file,
@@ -15,8 +20,10 @@ export const uploadFile = async ({
   path,
 }: UploadFileProps) => {
   const { storage, databases } = await createAdminClient();
+
   try {
     const inputFile = InputFile.fromBuffer(file, file.name);
+
     const bucketFile = await storage.createFile(
       appwriteConfig.bucketId,
       ID.unique(),
@@ -68,17 +75,9 @@ const createQueries = (
     ]),
   ];
 
-  if (types.length > 0) {
-    queries.push(Query.equal("type", types));
-  }
-
-  if (searchText) {
-    queries.push(Query.contains("name", searchText));
-  }
-
-  if (limit) {
-    queries.push(Query.limit(limit));
-  }
+  if (types.length > 0) queries.push(Query.equal("type", types));
+  if (searchText) queries.push(Query.contains("name", searchText));
+  if (limit) queries.push(Query.limit(limit));
 
   if (sort) {
     const [sortBy, orderBy] = sort.split("-");
@@ -102,17 +101,17 @@ export const getFiles = async ({
   try {
     const currentUser = await getCurrentUser();
 
-    if (!currentUser) {
-      throw new Error("User not found");
-    }
+    if (!currentUser) throw new Error("User not found");
 
     const queries = createQueries(currentUser, types, searchText, sort, limit);
+
     const files = await databases.listDocuments(
       appwriteConfig.databaseId,
       appwriteConfig.filesCollection,
       queries
     );
 
+    console.log({ files });
     return parseStringify(files);
   } catch (error) {
     handleError(error, "Failed to get files");
@@ -137,6 +136,7 @@ export const renameFile = async ({
         name: newName,
       }
     );
+
     revalidatePath(path);
     return parseStringify(updatedFile);
   } catch (error) {
@@ -160,6 +160,7 @@ export const updateFileUsers = async ({
         users: emails,
       }
     );
+
     revalidatePath(path);
     return parseStringify(updatedFile);
   } catch (error) {
@@ -180,9 +181,11 @@ export const deleteFile = async ({
       appwriteConfig.filesCollection,
       fileId
     );
+
     if (deletedFile) {
       await storage.deleteFile(appwriteConfig.bucketId, bucketFileId);
     }
+
     revalidatePath(path);
     return parseStringify({ status: "success" });
   } catch (error) {
@@ -190,6 +193,7 @@ export const deleteFile = async ({
   }
 };
 
+// ============================== TOTAL FILE SPACE USED
 export async function getTotalSpaceUsed() {
   try {
     const { databases } = await createSessionClient();
